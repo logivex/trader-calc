@@ -25,7 +25,7 @@ jobs:
       run:
         working-directory: packages/core
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable # TODO: pin an exact version once the project starts (reproducible builds)
@@ -39,7 +39,7 @@ jobs:
     name: app analyze + test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
