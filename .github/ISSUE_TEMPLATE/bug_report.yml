@@ -1,0 +1,26 @@
+name: Bug report
+description: Something is wrong or a result looks incorrect
+labels: [bug]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, macOS, Linux, Android]
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: v0.1.0
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: For a wrong result, give the calculator, the exact inputs, what you got and what you expected.
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce

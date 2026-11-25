@@ -1,0 +1,11 @@
+name: trader_core
+description: Pure-Dart calculation core of Trader Calc. No Flutter, no I/O. Verified against the golden vectors in /golden.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.6.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

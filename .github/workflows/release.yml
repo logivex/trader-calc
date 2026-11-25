@@ -1,0 +1,169 @@
+name: Release
+
+# Push a tag like v0.1.0 to build every platform and publish a GitHub Release.
+#   git tag v0.1.0 && git push origin v0.1.0
+# Tags containing a dash (v0.2.0-beta.1) are published as pre-releases.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: TraderCalc
+
+jobs:
+  # Never ship a build whose core disagrees with the golden vectors.
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - working-directory: packages/core
+        run: |
+          dart pub get
+          dart test
+
+  android:
+    needs: test-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Ensure platform folder
+        working-directory: app
+        run: |
+          [ -d android ] || flutter create --project-name trader_calc_app --org app.tradercalc --platforms=android .
+      - name: Restore signing key (if secrets exist)
+        working-directory: app
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks
+            cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+          else
+            echo "::warning::No Android keystore secrets - the APK will be debug-signed. See docs/RELEASING.md"
+          fi
+      - working-directory: app
+        run: |
+          flutter pub get
+          flutter build apk --release --split-per-abi
+          flutter build appbundle --release
+      - name: Collect
+        run: |
+          mkdir -p dist
+          for f in app/build/app/outputs/flutter-apk/app-*-release.apk; do
+            abi=$(basename "$f" | sed -E 's/app-(.*)-release.apk/\1/')
+            cp "$f" "dist/${APP_NAME}-${GITHUB_REF_NAME}-android-${abi}.apk"
+          done
+          cp app/build/app/outputs/bundle/release/app-release.aab "dist/${APP_NAME}-${GITHUB_REF_NAME}-android.aab"
+      - uses: actions/upload-artifact@v4
+        with: { name: android, path: dist/* }
+
+  windows:
+    needs: test-core
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Ensure platform folder
+        working-directory: app
+        shell: bash
+        run: |
+          [ -d windows ] || flutter create --project-name trader_calc_app --org app.tradercalc --platforms=windows .
+      - working-directory: app
+        run: |
+          flutter pub get
+          flutter build windows --release
+      - name: Zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path app/build/windows/x64/runner/Release/* -DestinationPath "dist/$env:APP_NAME-$env:GITHUB_REF_NAME-windows-x64.zip"
+      # TODO: Inno Setup installer (.exe) and code signing (SignPath Foundation is free for OSS).
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: dist/* }
+
+  macos:
+    needs: test-core
+    runs-on: macos-latest # Apple Silicon runner -> arm64 build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Ensure platform folder
+        working-directory: app
+        run: |
+          [ -d macos ] || flutter create --project-name trader_calc_app --org app.tradercalc --platforms=macos .
+      - working-directory: app
+        run: |
+          flutter pub get
+          flutter build macos --release
+      - name: Make dmg
+        run: |
+          mkdir -p dist stage
+          cp -R app/build/macos/Build/Products/Release/*.app stage/
+          ln -s /Applications stage/Applications
+          hdiutil create -volname "Trader Calc" -srcfolder stage -ov -format UDZO \
+            "dist/${APP_NAME}-${GITHUB_REF_NAME}-macos-arm64.dmg"
+      # TODO: Developer ID signing + notarization (needs a paid Apple Developer account);
+      #       until then users must right-click > Open the first time.
+      - uses: actions/upload-artifact@v4
+        with: { name: macos, path: dist/* }
+
+  linux:
+    needs: test-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Ensure platform folder
+        working-directory: app
+        run: |
+          [ -d linux ] || flutter create --project-name trader_calc_app --org app.tradercalc --platforms=linux .
+      - working-directory: app
+        run: |
+          flutter pub get
+          flutter build linux --release
+      - name: Package
+        run: |
+          mkdir -p dist
+          tar -C app/build/linux/x64/release/bundle -czf "dist/${APP_NAME}-${GITHUB_REF_NAME}-linux-x64.tar.gz" .
+      # TODO: AppImage and .deb packaging.
+      - uses: actions/upload-artifact@v4
+        with: { name: linux, path: dist/* }
+
+  publish:
+    needs: [android, windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}

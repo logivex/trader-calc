@@ -1,0 +1,30 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# The core is a library: don't commit its lockfile. The app is an application: do commit
+# app/pubspec.lock (reproducible release builds).
+packages/core/pubspec.lock
+
+# Android signing - NEVER commit
+**/key.properties
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# The original Python implementation lives OUTSIDE this repository; keep it out for good.
+/calculator/
+/reference/
+*.py
+__pycache__/
+*.pyc

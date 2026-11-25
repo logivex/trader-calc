@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: core tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Number formatting and the MT19937 stream must be identical everywhere.
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: packages/core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable # TODO: pin an exact version once the project starts (reproducible builds)
+          cache: true
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed .
+      - run: dart analyze --fatal-infos
+      - run: dart test
+
+  app:
+    name: app analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate platform folders if they are not committed yet
+        working-directory: app
+        run: |
+          if [ ! -d android ]; then
+            flutter create --project-name trader_calc_app --org app.tradercalc \
+              --platforms=android,windows,macos,linux .
+          fi
+      - working-directory: app
+        run: flutter pub get
+      - working-directory: app
+        run: flutter analyze --no-fatal-infos
+      - working-directory: app
+        run: flutter test
