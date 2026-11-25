@@ -18,7 +18,7 @@ jobs:
   test-core:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
       - working-directory: packages/core
@@ -30,8 +30,8 @@ jobs:
     needs: test-core
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: '17' }
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
@@ -71,14 +71,14 @@ jobs:
             cp "$f" "dist/${APP_NAME}-${GITHUB_REF_NAME}-android-${abi}.apk"
           done
           cp app/build/app/outputs/bundle/release/app-release.aab "dist/${APP_NAME}-${GITHUB_REF_NAME}-android.aab"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: android, path: dist/* }
 
   windows:
     needs: test-core
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
       - name: Ensure platform folder
@@ -96,14 +96,14 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
           Compress-Archive -Path app/build/windows/x64/runner/Release/* -DestinationPath "dist/$env:APP_NAME-$env:GITHUB_REF_NAME-windows-x64.zip"
       # TODO: Inno Setup installer (.exe) and code signing (SignPath Foundation is free for OSS).
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: windows, path: dist/* }
 
   macos:
     needs: test-core
     runs-on: macos-latest # Apple Silicon runner -> arm64 build
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with: { channel: stable, cache: true }
       - name: Ensure platform folder
@@ -123,14 +123,14 @@ jobs:
             "dist/${APP_NAME}-${GITHUB_REF_NAME}-macos-arm64.dmg"
       # TODO: Developer ID signing + notarization (needs a paid Apple Developer account);
       #       until then users must right-click > Open the first time.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: macos, path: dist/* }
 
   linux:
     needs: test-core
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Linux build dependencies
         run: |
           sudo apt-get update
@@ -150,19 +150,19 @@ jobs:
           mkdir -p dist
           tar -C app/build/linux/x64/release/bundle -czf "dist/${APP_NAME}-${GITHUB_REF_NAME}-linux-x64.tar.gz" .
       # TODO: AppImage and .deb packaging.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with: { name: linux, path: dist/* }
 
   publish:
     needs: [android, windows, macos, linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with: { path: dist, merge-multiple: true }
       - name: Checksums
         working-directory: dist
         run: sha256sum * > SHA256SUMS.txt
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: dist/*
           generate_release_notes: true
