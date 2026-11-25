@@ -8,11 +8,14 @@ void main() {
   final ported = isPorted(() => pctl(const [1.0], 50));
 
   group('pctl (golden/stats.json)', () {
-    final cases = (golden['pctl'] as List<dynamic>).cast<Map<String, dynamic>>();
+    final cases =
+        (golden['pctl'] as List<dynamic>).cast<Map<String, dynamic>>();
     for (var i = 0; i < cases.length; i++) {
       final c = cases[i];
       test('#$i p=${c['p']}', () {
-        final vals = [for (final v in c['vals'] as List<dynamic>) (v as num).toDouble()]..sort();
+        final vals = [
+          for (final v in c['vals'] as List<dynamic>) (v as num).toDouble()
+        ]..sort();
         expectGolden(pctl(vals, (c['p'] as num).toDouble()), c['out']);
       });
     }

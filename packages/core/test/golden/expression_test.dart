@@ -4,7 +4,8 @@ import 'package:trader_core/trader_core.dart';
 import 'golden_util.dart';
 
 void main() {
-  final cases = (loadGolden('expression') as List<dynamic>).cast<Map<String, dynamic>>();
+  final cases =
+      (loadGolden('expression') as List<dynamic>).cast<Map<String, dynamic>>();
   final ported = isPorted(() => calcEval('1', deg: true));
 
   group('calcEval (golden/expression.json)', () {
@@ -17,7 +18,8 @@ void main() {
         if (c.containsKey('error')) {
           expect(
             () => calcEval(input, deg: deg, ans: ans),
-            throwsA(isA<CalcError>().having((e) => e.message, 'message', c['error'])),
+            throwsA(isA<CalcError>()
+                .having((e) => e.message, 'message', c['error'])),
           );
         } else {
           final v = calcEval(input, deg: deg, ans: ans);

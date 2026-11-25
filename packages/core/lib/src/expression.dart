@@ -24,7 +24,9 @@ double calcEval(String expression, {required bool deg, double ans = 0}) {
 }
 
 /// Display format of a result (`fmt_calc` in the reference).
-String fmtCalc(double v) => throw UnimplementedError('fmtCalc is not ported yet');
+String fmtCalc(double v) =>
+    throw UnimplementedError('fmtCalc is not ported yet');
 
 /// Full-precision copy format (`raw_calc` in the reference).
-String rawCalc(double v) => throw UnimplementedError('rawCalc is not ported yet');
+String rawCalc(double v) =>
+    throw UnimplementedError('rawCalc is not ported yet');

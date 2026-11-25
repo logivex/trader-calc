@@ -4,7 +4,8 @@ import 'package:trader_core/trader_core.dart';
 import 'golden_util.dart';
 
 void main() {
-  final cases = (loadGolden('parse') as List<dynamic>).cast<Map<String, dynamic>>();
+  final cases =
+      (loadGolden('parse') as List<dynamic>).cast<Map<String, dynamic>>();
   final ported = isPorted(() => parseNumber('1'));
 
   group('parseNumber (golden/parse.json)', () {

@@ -11,7 +11,10 @@ Map<String, Object?> outcomeToJson(CalcOutcome o) => switch (o) {
           ],
           'ctx': ctx,
         },
-      CalcMessage(:final message) => {'out': message, 'ctx': <String, Object?>{}},
+      CalcMessage(:final message) => {
+          'out': message,
+          'ctx': <String, Object?>{}
+        },
       CalcRaised(:final kind) => {'raised': kind},
     };
 
@@ -35,7 +38,8 @@ void main() {
   final golden = loadGolden('calculators') as Map<String, dynamic>;
   final defaults = _settings(golden['settings'] as Map<String, dynamic>);
   final alt = defaults.copyWith(
-    mmr: ((golden['settings_alt'] as Map<String, dynamic>)['mmr'] as num).toDouble(),
+    mmr: ((golden['settings_alt'] as Map<String, dynamic>)['mmr'] as num)
+        .toDouble(),
   );
   final altCases = golden['alt'] as Map<String, dynamic>;
 
@@ -46,9 +50,12 @@ void main() {
       for (var i = 0; i < cases.length; i++) {
         test('case $i', () => _check(id, cases[i], defaults));
       }
-      final extra = (altCases[id] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? const [];
+      final extra =
+          (altCases[id] as List<dynamic>?)?.cast<Map<String, dynamic>>() ??
+              const [];
       for (var i = 0; i < extra.length; i++) {
-        test('alt settings (mmr=1.25) case $i', () => _check(id, extra[i], alt));
+        test(
+            'alt settings (mmr=1.25) case $i', () => _check(id, extra[i], alt));
       }
     }, skip: ported ? false : 'not ported yet');
   }

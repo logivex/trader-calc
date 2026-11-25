@@ -13,7 +13,8 @@ Directory goldenDir() {
     if (File('${g.path}${sep}parse.json').existsSync()) return g;
     dir = dir.parent;
   }
-  throw StateError('golden/ directory not found from ${Directory.current.path}');
+  throw StateError(
+      'golden/ directory not found from ${Directory.current.path}');
 }
 
 /// Loads `golden/<name>.json`.
@@ -64,7 +65,9 @@ String? goldenDiff(Object? actual, Object? expected,
     if (actual is num && _tagged.contains(expected)) {
       return _numDiff(actual.toDouble(), _untag(expected), path, rel);
     }
-    return actual == expected ? null : '$path: expected "$expected", got "$actual"';
+    return actual == expected
+        ? null
+        : '$path: expected "$expected", got "$actual"';
   }
   if (expected is num) {
     if (actual is! num) return '$path: expected number $expected, got $actual';
@@ -105,5 +108,6 @@ void expectGolden(Object? actual, Object? expected, {double rel = 1e-12}) {
 /// Golden inputs decode ints and doubles differently (`10` vs `10.0`);
 /// calculators take doubles, so normalise every number.
 Map<String, Object?> normalizeInput(Map<String, dynamic> raw) => {
-      for (final e in raw.entries) e.key: e.value is num ? (e.value as num).toDouble() : e.value,
+      for (final e in raw.entries)
+        e.key: e.value is num ? (e.value as num).toDouble() : e.value,
     };

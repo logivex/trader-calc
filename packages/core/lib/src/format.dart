@@ -6,6 +6,7 @@
 /// `0.125`. These functions must match the golden strings exactly.
 ///
 /// TODO(port): implement and unit-test (see `test/format_test.dart`).
+library;
 
 /// `f"{x:,.{decimals}f}"`, optionally with sign (`:+,.2f`) and no grouping.
 String fmtFixed(
